@@ -14,7 +14,7 @@ export default defineConfig({
   markdown: { processor: unified({ remarkPlugins: [remarkHeadingId] }) },
   integrations: [
     starlight({
-      title: '小草互联文档中心',
+      title: '小草互联trip文档中心',
       locales: { root: { label: '简体中文', lang: 'zh-CN' } },
       lastUpdated: true,
       plugins: [starlightLinksValidator()],
