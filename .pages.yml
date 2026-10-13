@@ -1,0 +1,82 @@
+settings:
+  content:
+    merge: true
+  commit:
+    identity: user
+    templates:
+      create: "docs(content): 新增 {path}（{userName}）"
+      update: "docs(content): 修改 {path}（{userName}）"
+
+media:
+  input: public/images/manual
+  output: /images/manual
+  rename: random
+  categories: [image]
+
+content:
+  - name: manual
+    label: 操作手册
+    type: group
+    items:
+      - name: getting-started
+        label: 快速入门
+        type: collection
+        path: src/content/docs/manual/getting-started
+        format: yaml-frontmatter
+        subfolders: false
+        filename:
+          template: "{primary}.md"
+          field: create
+        operations: { delete: false, rename: false }
+        view: { primary: title, fields: [title, description] }
+        fields: &docFields
+          - { name: title, label: 标题, type: string, required: true }
+          - { name: description, label: 简介, type: text }
+          - name: sidebar
+            label: 侧边栏
+            type: object
+            fields:
+              - { name: order, label: 排序（数字越小越靠前）, type: number }
+          - name: body
+            label: 正文（Markdown）
+            type: code
+            options: { format: markdown }
+
+      - name: hotel-search
+        label: 酒店查询
+        type: collection
+        path: src/content/docs/manual/hotel-search
+        format: yaml-frontmatter
+        subfolders: false
+        filename:
+          template: "{primary}.md"
+          field: create
+        operations: { delete: false, rename: false }
+        view: { primary: title, fields: [title, description] }
+        fields: *docFields
+
+      - name: quotation
+        label: 询价报价
+        type: collection
+        path: src/content/docs/manual/quotation
+        format: yaml-frontmatter
+        subfolders: false
+        filename:
+          template: "{primary}.md"
+          field: create
+        operations: { delete: false, rename: false }
+        view: { primary: title, fields: [title, description] }
+        fields: *docFields
+
+      - name: orders
+        label: 订单管理
+        type: collection
+        path: src/content/docs/manual/orders
+        format: yaml-frontmatter
+        subfolders: false
+        filename:
+          template: "{primary}.md"
+          field: create
+        operations: { delete: false, rename: false }
+        view: { primary: title, fields: [title, description] }
+        fields: *docFields
