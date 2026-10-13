@@ -22,7 +22,8 @@ for (const file of walk(DOCS).filter((f) => /\.mdx?$/.test(f))) {
   const { data, content } = matter(readFileSync(file, 'utf8'));
   if (!data.title) errors.push(`${rel}: 缺少 title`);
 
-  for (const m of content.matchAll(/!\[([^\]]*)\]\((\/images\/manual\/[^)\s]+)\)/g)) {
+  const prose = content.replace(/^(```|~~~)[\s\S]*?^\1/gm, '').replace(/`[^`\n]*`/g, '');
+  for (const m of prose.matchAll(/!\[([^\]]*)\]\((\/images\/manual\/[^)\s]+)\)/g)) {
     if (!m[1].trim()) errors.push(`${rel}: 图片 ${m[2]} 缺少替代文本`);
     if (!existsSync(join('public', m[2]))) errors.push(`${rel}: 图片不存在 ${m[2]}`);
   }
