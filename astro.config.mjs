@@ -28,6 +28,7 @@ export default defineConfig({
         { label: '酒店查询', items: [{ autogenerate: { directory: 'manual/hotel-search' } }] },
         { label: '询价报价', items: [{ autogenerate: { directory: 'manual/quotation' } }] },
         { label: '订单管理', items: [{ autogenerate: { directory: 'manual/orders' } }] },
+        { label: '说明文档', items: [{ autogenerate: { directory: 'manual/guide' } }] },
       ],
     }),
   ],

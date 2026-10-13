@@ -1,0 +1,305 @@
+---
+title: 说明文档
+description: 小草互联文档中心的编辑、发布与维护操作手册
+sidebar:
+  order: 1
+---
+
+本文是小草互联文档中心自身的操作手册，面向负责编写和发布文档的同事，介绍如何在线编辑文章、上传图片、新增目录、发布上线和回滚。
+
+## 系统简介 {#overview}
+
+小草互联文档中心是一个公开的静态文档网站，访问地址为 `https://docs.xchltrip.com/`，无需登录即可浏览。
+
+| 组成部分 | 作用 |
+| --- | --- |
+| 文档站点 | 基于 Astro Starlight 构建，提供侧边栏导航、站内搜索、页内目录 |
+| GitHub 仓库 `xchltrip-docs` | 保存全部文章、图片和站点配置，每次修改都有版本记录 |
+| Pages CMS | 在线编辑器，不需要会写代码，在网页里就能修改文章 |
+| GitHub Actions | 自动校验内容、构建网站并发布上线 |
+
+文章以 Markdown（`.md`）文件的形式保存在仓库中，**仓库就是唯一的内容来源**，没有额外的数据库。
+
+## 分支与发布流程 {#workflow}
+
+仓库有两个长期分支：
+
+| 分支 | 用途 | 推送后会发生什么 |
+| --- | --- | --- |
+| `content` | 日常编辑分支，Pages CMS 默认保存到这里 | 自动执行内容校验和构建检查，**不会**上线 |
+| `main` | 线上分支，代表网站当前内容 | 自动构建并发布到线上 |
+
+完整流程：
+
+1. 在 Pages CMS 中编辑文章并保存，内容提交到 `content` 分支；
+2. GitHub 自动运行 **validate** 检查，确认没有格式错误；
+3. 发布负责人在 GitHub 上从 `content` 向 `main` 发起合并请求（Pull Request）；
+4. 核对无误后合并，GitHub 自动运行 **deploy**；
+5. 1–2 分钟后线上网站更新。
+
+:::caution
+只有合并到 `main` 的内容才会上线。在 Pages CMS 中保存后线上没有变化是正常的，需要走完第 3、4 步。
+:::
+
+## 登录 Pages CMS {#login}
+
+1. 打开 `https://app.pagescms.org/`，点击「Sign in with GitHub」，使用已授权的 GitHub 账号登录。
+2. 在仓库列表中选择 `xchltrip-docs`。
+3. 点击左上角的分支名，**切换到 `content` 分支**。
+
+建议把下面的地址保存为浏览器书签，打开即是 `content` 分支：
+
+```text
+https://app.pagescms.org/xchltrip/xchltrip-docs/content
+```
+
+左侧菜单说明：
+
+| 菜单 | 作用 |
+| --- | --- |
+| 操作手册 | 按目录列出所有文章，如快速入门、酒店查询、询价报价、订单管理、说明文档 |
+| 媒体 | 管理上传的图片 |
+| 行动 | 查看自动校验与发布的运行记录 |
+| 合作者 | 管理可以编辑内容的人员 |
+| 配置 | 在线查看和修改 CMS 配置文件 `.pages.yml` |
+
+## 修改文章 {#edit}
+
+1. 在左侧「操作手册」下点击目录，例如「酒店查询」。
+2. 在文章列表中找到要修改的文章，点击「编辑」。
+3. 按需修改以下字段：
+
+| 字段 | 说明 |
+| --- | --- |
+| 标题 | 显示在页面顶部和侧边栏，必填 |
+| 简介 | 显示在搜索结果和分享卡片中，建议一句话概括 |
+| 侧边栏 → 排序 | 同一目录内的排序，数字越小越靠前 |
+| 正文（Markdown） | 文章内容，按 Markdown 语法编写，见[正文写作规范](#writing) |
+
+4. 点击右上角「保存」，系统会以您的身份向 `content` 分支提交一次修改。
+
+:::tip
+每次保存都会生成一条版本记录，可以随时在 GitHub 上查看历史或恢复到旧版本，不必担心改错。
+:::
+
+## 新建文章 {#create}
+
+1. 进入目标目录，点击右上角「添加条目」。
+2. 填写**文件名**：只能使用小写英文字母、数字和连字符，例如 `batch-inquiry`、`bill-export`，不能使用中文、空格或大写字母。
+3. 填写标题、简介、排序和正文，点击「保存」。
+
+文件名决定文章的访问地址，例如在「询价报价」目录下新建 `batch-inquiry`，访问地址为：
+
+```text
+https://docs.xchltrip.com/manual/quotation/batch-inquiry/
+```
+
+:::caution
+为了防止站内链接失效，Pages CMS 中**不允许删除或重命名文章**。确实需要删除或改名时，请联系开发同事在仓库中处理，并同步修改引用了该文章的链接。
+:::
+
+## 正文写作规范 {#writing}
+
+### 标题与锚点 {#headings}
+
+- 正文从二级标题 `##` 开始，页面标题由「标题」字段自动生成，正文中不要再写一级标题 `#`；
+- 二级、三级标题会自动出现在页面右侧的「本页目录」中；
+- 需要被其他文章引用的标题，在末尾加上英文锚点，例如：
+
+```markdown
+## 预算怎么填 {#budget}
+```
+
+锚点只能用小写英文和连字符，同一篇文章内不能重复。已被引用的锚点不要随意修改。
+
+### 站内链接 {#links}
+
+链接到其他文章时，使用以 `/` 开头、以 `/` 结尾的站内路径：
+
+```markdown
+请先[登录系统](/manual/getting-started/login/)。
+预算填写方法见[发起询价](/manual/quotation/create/#budget)。
+本文内跳转见[上传图片](#images)。
+```
+
+- 路径 = `/manual/目录名/文件名/`，末尾的 `/` 不能省略；
+- 跳转到某个小节，在路径后加 `#锚点`；
+- 构建时会自动检查所有站内链接，链接到不存在的页面或锚点时，校验会失败。
+
+### 常用格式 {#markdown}
+
+| 效果 | 写法 |
+| --- | --- |
+| 加粗 | `**重要内容**` |
+| 无序列表 | 每行以 `- ` 开头 |
+| 有序列表 | 每行以 `1. `、`2. ` 开头 |
+| 行内代码或界面文字 | 用反引号包裹，如 `` `保存` `` |
+| 表格 | 用竖线分隔各列，第二行用短横线写分隔行，可参考本文中的表格 |
+| 引用 | 行首加 `> ` |
+
+### 提示框 {#asides}
+
+需要提醒读者时，可以使用提示框：
+
+```markdown
+:::tip
+这是一条小技巧。
+:::
+
+:::note
+这是一条补充说明。
+:::
+
+:::caution
+这是一条需要注意的事项。
+:::
+
+:::danger
+这是一条风险警告。
+:::
+```
+
+也可以自定义提示框标题，例如 `:::tip[推荐浏览器]`。
+
+## 上传图片 {#images}
+
+1. 在正文编辑器中插入图片，或先在左侧「媒体」中上传图片。
+2. 图片会保存到 `public/images/manual/` 目录，文件名自动生成，无需手动命名。
+3. 正文中的图片写法如下，方括号中的文字是**替代文本**，必须填写：
+
+```markdown
+![酒店查询页面的搜索栏](/images/manual/abc123.png)
+```
+
+图片要求：
+
+- 每张图片不超过 **1MB**，截图建议先压缩，推荐 PNG、JPG 或 WebP 格式；
+- 替代文本用一句话描述图片内容，不能为空；
+- 截图中不要出现真实客户姓名、手机号、价格等敏感信息，必要时先打码。
+
+## 新增目录 {#new-directory}
+
+目录（侧边栏分组）需要开发同事在仓库中配置，Pages CMS 中不能直接新建。新增一个目录需要修改两处，以新增「账单管理」为例：
+
+1. 新建目录 `src/content/docs/manual/billing/`，目录名只能用小写英文和连字符；
+2. 在 `astro.config.mjs` 的 `sidebar` 中添加一行，决定网站侧边栏的分组：
+
+```js
+{ label: '账单管理', items: [{ autogenerate: { directory: 'manual/billing' } }] },
+```
+
+3. 在 `.pages.yml` 中复制一段已有目录的配置，修改 `name`、`label`、`path`，决定 Pages CMS 左侧菜单：
+
+```yaml
+      - name: billing
+        label: 账单管理
+        type: collection
+        path: src/content/docs/manual/billing
+        format: yaml-frontmatter
+        subfolders: false
+        filename:
+          template: "{primary}.md"
+          field: create
+        operations: { delete: false, rename: false }
+        view: { primary: title, fields: [title, description] }
+        fields: *docFields
+```
+
+4. 提交到 `content` 分支，刷新 Pages CMS 后即可在新目录下添加文章。
+
+侧边栏中各分组的先后顺序，与 `astro.config.mjs` 中的书写顺序一致。
+
+## 发布上线 {#publish}
+
+由发布负责人操作：
+
+1. 打开 GitHub 仓库 `xchltrip/xchltrip-docs`，点击「Pull requests」→「New pull request」。
+2. 选择 `base: main` ← `compare: content`，点击「Create pull request」。
+3. 核对以下内容：
+   - 修改的文件只涉及文章（`src/content/docs/**`）和图片（`public/images/manual/**`）；
+   - 页面下方的 **validate** 检查显示通过；
+   - 文字内容正确，没有敏感信息。
+4. 选择 **Create a merge commit** 方式合并。不要使用「Squash and merge」，否则两个分支以后容易产生冲突。
+5. 在「Actions」页面查看 **deploy** 运行结果，显示绿色即发布成功。
+6. 打开 `https://docs.xchltrip.com/` 刷新确认，如页面未更新，可按 `Ctrl + F5`（Mac 为 `Cmd + Shift + R`）强制刷新。
+
+### 同步 main 到 content {#sync}
+
+开发同事直接修改了 `main`（例如调整站点配置）后，需要把 `main` 同步回 `content`，避免下次合并冲突：
+
+```bash
+git checkout content
+git pull
+git merge origin/main
+git push
+git checkout main
+```
+
+## 回滚 {#rollback}
+
+线上内容发布错误时，可以快速恢复到之前的版本：
+
+1. 在 GitHub「Actions」→「deploy」的历史记录中，找到上一次正常发布的运行，复制对应的完整提交号（40 位）。
+2. 打开「Actions」→「rollback」→「Run workflow」，分支选择 `main`，粘贴提交号后运行。
+3. 运行成功后刷新网站，确认已恢复。
+4. 回滚只切换线上版本，不修改仓库内容。之后还需要在 `content` 分支上修正错误内容，再按正常流程发布，否则下次发布会把错误内容再次带上线。
+
+线上只保留最近的若干个版本，太久之前的版本无法直接回滚，需要通过修改内容重新发布。
+
+## 内容校验失败怎么办 {#troubleshooting}
+
+保存或合并后，如果 validate 或 deploy 显示红色失败，点击进入查看第一条错误信息：
+
+| 错误信息 | 原因 | 处理方式 |
+| --- | --- | --- |
+| 文件名只能用小写英文、数字和连字符 | 新建文章时文件名不符合规范 | 联系开发同事重命名文件 |
+| 缺少 title | 文章没有填写标题 | 在 CMS 中补充标题后保存 |
+| 图片缺少替代文本 | 图片写法中方括号为空 | 补充图片描述 |
+| 图片不存在 | 图片路径写错或图片未上传 | 重新上传图片并更新路径 |
+| 超过 1MB，请压缩后重新上传 | 图片太大 | 压缩后重新上传 |
+| 链接校验失败（invalid link） | 站内链接指向不存在的页面或锚点 | 按[站内链接](#links)规范修正 |
+
+## 本地开发与预览 {#local}
+
+开发同事在本机修改站点配置或批量调整文章时使用：
+
+```bash
+git clone git@github.com:xchltrip/xchltrip-docs.git
+cd xchltrip-docs
+npm ci
+npm run dev
+```
+
+浏览器打开 `http://localhost:4321/` 即可实时预览，修改文件后页面自动刷新。
+
+提交前请先在本机跑一遍校验和构建：
+
+```bash
+npm run check:content
+npm run build
+```
+
+两条命令都通过后再提交推送。需要 Node.js 22 或以上版本。
+
+## 安全须知 {#security}
+
+- 文档站点是**公开网站**，任何人都能访问，不要写入内部系统地址、账号密码、服务器信息、客户数据等内容；
+- 不要把仓库访问权限、Pages CMS 编辑权限分享给无关人员，人员离职时及时移除；
+- 发布和回滚全部通过 GitHub 自动完成，日常维护不需要也不应该登录服务器。
+
+## 常见问题 {#faq}
+
+**在 Pages CMS 保存后，线上为什么没变化？**
+保存只提交到 `content` 分支，需要发布负责人合并到 `main` 后才会上线，见[发布上线](#publish)。
+
+**Pages CMS 左侧看不到文章？**
+确认左上角分支已切换到 `content`；如果新增了目录，确认 `.pages.yml` 已经配置。
+
+**改错了内容怎么恢复？**
+未发布时，在 GitHub 上查看该文件的历史记录，复制旧内容重新保存即可；已发布时，先按[回滚](#rollback)恢复线上，再修正内容。
+
+**多人同时编辑同一篇文章会怎样？**
+后保存的人可能会遇到冲突提示，请刷新页面获取最新内容后重新修改。建议同一篇文章同一时间只由一人编辑。
+
+**业务功能的操作说明在哪里？**
+请查看[系统登录](/manual/getting-started/login/)、[酒店查询](/manual/hotel-search/search/)、[发起询价](/manual/quotation/create/)和[订单列表](/manual/orders/list/)。
