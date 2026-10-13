@@ -66,10 +66,10 @@ jobs:
           out=$(ssh -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=20 \
             "$DEPLOY_USER@$DEPLOY_HOST" "ping" 2>&1) || true
           case "$out" in
-            *denied*)                       echo "SSH 连通，部署密钥有效" ;;
             *"Host key verification"*)      echo "::error::DEPLOY_KNOWN_HOSTS 与服务器指纹不一致"; exit 1 ;;
-            *"Permission denied"*)          echo "::error::部署私钥与服务器上的公钥不匹配"; exit 1 ;;
+            *"Permission denied"*)          echo "::error::部署私钥与服务器上的公钥不匹配，或 DEPLOY_USER 不正确"; exit 1 ;;
             *"timed out"*|*"Connection refused"*) echo "::error::无法连接服务器 SSH 端口，检查安全组和宝塔防火墙"; exit 1 ;;
+            *denied*)                       echo "SSH 连通，部署密钥有效" ;;
             *)                              echo "::error::SSH 检查失败"; echo "$out" | sed -E 's/[0-9]{1,3}(\.[0-9]{1,3}){3}/***/g'; exit 1 ;;
           esac
 
