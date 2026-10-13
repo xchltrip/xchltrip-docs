@@ -38,7 +38,7 @@ jobs:
           PUBLIC_ENV: production
           PUBLIC_BUILD_SHA: ${{ github.sha }}
 
-      - name: 配置部署密钥
+      - name: 配置部署连接
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
@@ -51,20 +51,37 @@ jobs:
             [ -n "${!name}" ] || missing="$missing $name"
           done
           [ -z "$missing" ] || { echo "::error::缺少 Secrets:$missing"; exit 1; }
+
+          host=$(printf '%s' "$DEPLOY_HOST" | tr -d '[:space:]')
+          port=$(printf '%s' "$DEPLOY_PORT" | tr -d '[:space:]')
+          user=$(printf '%s' "$DEPLOY_USER" | tr -d '[:space:]')
+
           install -m 700 -d ~/.ssh
           printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
           ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "::error::DEPLOY_SSH_KEY 不是有效的私钥"; exit 1; }
 
+          cat > ~/.ssh/config <<EOF
+          Host deploy-target
+            HostName $host
+            Port $port
+            User $user
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            BatchMode yes
+            ConnectTimeout 20
+            LogLevel ERROR
+          EOF
+          chmod 600 ~/.ssh/config
+
+          echo "部署私钥指纹（用于和本机核对，不含敏感信息）："
+          ssh-keygen -lf ~/.ssh/deploy_key
+          echo "部署用户名长度：${#user}"
+
       - name: 检查服务器连通
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          out=$(ssh -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key -o BatchMode=yes -o ConnectTimeout=20 \
-            "$DEPLOY_USER@$DEPLOY_HOST" "ping" 2>&1) || true
+          out=$(ssh deploy-target "ping" 2>&1) || true
           case "$out" in
             *"Host key verification"*)      echo "::error::DEPLOY_KNOWN_HOSTS 与服务器指纹不一致"; exit 1 ;;
             *"Permission denied"*)          echo "::error::部署私钥与服务器上的公钥不匹配，或 DEPLOY_USER 不正确"; exit 1 ;;
@@ -74,23 +91,10 @@ jobs:
           esac
 
       - name: 上传新版本
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: |
-          rsync -az --timeout=120 \
-            -e "ssh -p $DEPLOY_PORT -i $HOME/.ssh/deploy_key -o BatchMode=yes -o LogLevel=ERROR" \
-            dist/ "$DEPLOY_USER@$DEPLOY_HOST:$GITHUB_SHA/"
+        run: rsync -az --timeout=120 -e ssh dist/ "deploy-target:$GITHUB_SHA/"
 
       - name: 切换线上版本
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: |
-          ssh -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key -o BatchMode=yes -o LogLevel=ERROR \
-            "$DEPLOY_USER@$DEPLOY_HOST" "switch $GITHUB_SHA"
+        run: ssh deploy-target "switch $GITHUB_SHA"
 
       - name: 冒烟检查
         run: |
@@ -108,4 +112,4 @@ jobs:
 
       - name: 清理密钥
         if: always()
-        run: rm -f ~/.ssh/deploy_key
+        run: rm -f ~/.ssh/deploy_key ~/.ssh/config
