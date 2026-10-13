@@ -8,8 +8,9 @@ const isPreview = process.env.PUBLIC_ENV === 'preview';
 const buildSha = process.env.PUBLIC_BUILD_SHA ?? 'local';
 
 export default defineConfig({
-  site: isPreview ? 'https://docs-preview.example.com' : 'https://docs.example.com',
+  site: isPreview ? 'https://docs-preview.xchltrip.com' : 'https://docs.xchltrip.com',
   trailingSlash: 'always',
+  server: { host: true },
   markdown: { processor: unified({ remarkPlugins: [remarkHeadingId] }) },
   integrations: [
     starlight({
