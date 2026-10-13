@@ -1,0 +1,86 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SITE_URL: https://docs.xchltrip.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run check:content
+
+      - name: 构建
+        run: npm run build
+        env:
+          PUBLIC_ENV: production
+          PUBLIC_BUILD_SHA: ${{ github.sha }}
+
+      - name: 配置部署密钥
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+      - name: 上传新版本
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          rsync -az --timeout=120 \
+            -e "ssh -p $DEPLOY_PORT -i $HOME/.ssh/deploy_key -o BatchMode=yes -o LogLevel=ERROR" \
+            dist/ "$DEPLOY_USER@$DEPLOY_HOST:$GITHUB_SHA/"
+
+      - name: 切换线上版本
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -p "$DEPLOY_PORT" -i ~/.ssh/deploy_key -o BatchMode=yes -o LogLevel=ERROR \
+            "$DEPLOY_USER@$DEPLOY_HOST" "switch $GITHUB_SHA"
+
+      - name: 冒烟检查
+        run: |
+          for i in $(seq 1 6); do
+            if curl -fsS "$SITE_URL/" | grep -q "$GITHUB_SHA" \
+              && curl -fsS -o /dev/null "$SITE_URL/manual/getting-started/login/" \
+              && curl -fsS -o /dev/null "$SITE_URL/pagefind/pagefind.js"; then
+              echo "新版本已生效"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::新版本未生效，请检查服务器或执行回滚"
+          exit 1
+
+      - name: 清理密钥
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
