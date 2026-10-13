@@ -1,0 +1,16 @@
+---
+import Default from '@astrojs/starlight/components/Banner.astro';
+const sha = (import.meta.env.PUBLIC_BUILD_SHA ?? 'local').slice(0, 7);
+---
+<div class="preview-banner">预览环境 · 版本 {sha} · 内容尚未正式发布</div>
+<Default />
+
+<style>
+  .preview-banner {
+    padding: 0.5rem 1rem;
+    background: #fff4e5;
+    color: #8a4b00;
+    text-align: center;
+    font-size: 0.875rem;
+  }
+</style>

@@ -1,26 +1,33 @@
-// @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import starlightLinksValidator from 'starlight-links-validator';
+import { remarkHeadingId } from 'remark-custom-heading-id';
+import { unified } from '@astrojs/markdown-remark';
 
-// https://astro.build/config
+const isPreview = process.env.PUBLIC_ENV === 'preview';
+const buildSha = process.env.PUBLIC_BUILD_SHA ?? 'local';
+
 export default defineConfig({
-	integrations: [
-		starlight({
-			title: 'My Docs',
-			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
-			sidebar: [
-				{
-					label: 'Guides',
-					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
-					],
-				},
-				{
-					label: 'Reference',
-					items: [{ autogenerate: { directory: 'reference' } }],
-				},
-			],
-		}),
-	],
+  site: isPreview ? 'https://docs-preview.example.com' : 'https://docs.example.com',
+  trailingSlash: 'always',
+  markdown: { processor: unified({ remarkPlugins: [remarkHeadingId] }) },
+  integrations: [
+    starlight({
+      title: '小草互联文档中心',
+      locales: { root: { label: '简体中文', lang: 'zh-CN' } },
+      lastUpdated: true,
+      plugins: [starlightLinksValidator()],
+      head: [
+        { tag: 'meta', attrs: { name: 'build-sha', content: buildSha } },
+        ...(isPreview ? [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, nofollow' } }] : []),
+      ],
+      components: isPreview ? { Banner: './src/components/PreviewBanner.astro' } : {},
+      sidebar: [
+        { label: '快速入门', items: [{ autogenerate: { directory: 'manual/getting-started' } }] },
+        { label: '酒店查询', items: [{ autogenerate: { directory: 'manual/hotel-search' } }] },
+        { label: '询价报价', items: [{ autogenerate: { directory: 'manual/quotation' } }] },
+        { label: '订单管理', items: [{ autogenerate: { directory: 'manual/orders' } }] },
+      ],
+    }),
+  ],
 });
