@@ -80,3 +80,16 @@ content:
         operations: { delete: false, rename: false }
         view: { primary: title, fields: [title, description] }
         fields: *docFields
+
+      - name: guide
+        label: 说明文档
+        type: collection
+        path: src/content/docs/manual/guide
+        format: yaml-frontmatter
+        subfolders: false
+        filename:
+          template: "{primary}.md"
+          field: create
+        operations: { delete: false, rename: false }
+        view: { primary: title, fields: [title, description] }
+        fields: *docFields
