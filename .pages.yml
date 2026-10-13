@@ -25,7 +25,7 @@ content:
         format: yaml-frontmatter
         subfolders: false
         filename:
-          template: "{primary}.md"
+          template: "article-{year}{month}{day}.md"
           field: create
         operations: { delete: false, rename: false }
         view: { primary: title, fields: [title, description] }
@@ -49,7 +49,7 @@ content:
         format: yaml-frontmatter
         subfolders: false
         filename:
-          template: "{primary}.md"
+          template: "article-{year}{month}{day}.md"
           field: create
         operations: { delete: false, rename: false }
         view: { primary: title, fields: [title, description] }
@@ -62,7 +62,7 @@ content:
         format: yaml-frontmatter
         subfolders: false
         filename:
-          template: "{primary}.md"
+          template: "article-{year}{month}{day}.md"
           field: create
         operations: { delete: false, rename: false }
         view: { primary: title, fields: [title, description] }
@@ -75,21 +75,24 @@ content:
         format: yaml-frontmatter
         subfolders: false
         filename:
-          template: "{primary}.md"
+          template: "article-{year}{month}{day}.md"
           field: create
         operations: { delete: false, rename: false }
         view: { primary: title, fields: [title, description] }
         fields: *docFields
 
+  - name: internal
+    label: 内部文档
+    type: group
+    items:
       - name: guide
         label: 说明文档
-        type: collection
-        path: src/content/docs/manual/guide
+        type: file
+        path: 说明文档.md
         format: yaml-frontmatter
-        subfolders: false
-        filename:
-          template: "{primary}.md"
-          field: create
-        operations: { delete: false, rename: false }
-        view: { primary: title, fields: [title, description] }
-        fields: *docFields
+        fields:
+          - { name: title, label: 标题, type: string }
+          - name: body
+            label: 正文（Markdown）
+            type: code
+            options: { format: markdown }
