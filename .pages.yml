@@ -81,6 +81,19 @@ content:
         view: { primary: title, fields: [title, description] }
         fields: *docFields
 
+      - name: bills
+        label: 账单管理
+        type: collection
+        path: src/content/docs/manual/bills
+        format: yaml-frontmatter
+        subfolders: false
+        filename:
+          template: "article-{year}{month}{day}.md"
+          field: create
+        operations: { delete: false, rename: false }
+        view: { primary: title, fields: [title, description] }
+        fields: *docFields
+
   - name: internal
     label: 内部文档
     type: group
