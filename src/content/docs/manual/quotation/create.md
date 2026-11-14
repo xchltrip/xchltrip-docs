@@ -183,7 +183,7 @@ AI 解析的结果仅作为填写辅助，提交前请务必核对右侧表单�
 
 报价确认后，可以在订单列表查看订单。
 
-[订单列表](/images/manual/orders-list.png)
+![订单列表](/images/manual/orders-list.png)
 
 ## 关键限制说明 {#inquiry-limit}
 - 发起限制：一次询价只能针对一家酒店，比较多家酒店需分别发起或使用人工询价；
